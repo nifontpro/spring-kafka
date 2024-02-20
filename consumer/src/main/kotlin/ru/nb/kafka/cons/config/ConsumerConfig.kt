@@ -10,11 +10,9 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
-import org.springframework.kafka.config.KafkaListenerContainerFactory
 import org.springframework.kafka.config.TopicBuilder
 import org.springframework.kafka.core.ConsumerFactory
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory
-import org.springframework.kafka.listener.ConcurrentMessageListenerContainer
 import org.springframework.kafka.support.JacksonUtils
 import org.springframework.kafka.support.serializer.JsonDeserializer
 import org.springframework.kafka.support.serializer.JsonDeserializer.TYPE_MAPPINGS
@@ -26,11 +24,11 @@ import ru.nb.kafka.core.Log
 import ru.nb.kafka.core.StringValue
 
 @Configuration
-class ApplicationConfig(
+class ConsumerConfig(
 	@Value("\${kafka.topic}") val topicName: String,
 	@Value("\${kafka.bootstrap-servers}") val bootstrapServers: String,
 	@Value("\${kafka.consumer.client-id}") val consumerClientId: String,
-	@Value("\${spring.kafka.consumer.group-id}") val consumerGroupId: String,
+	@Value("\${kafka.consumer.group-id}") val consumerGroupId: String,
 ) {
 
 	@Bean
@@ -42,9 +40,6 @@ class ApplicationConfig(
 	fun consumerFactory(
 		mapper: ObjectMapper
 	): ConsumerFactory<String, StringValue> {
-
-		log.info("--------------------> START CONFIG")
-
 		val props = mutableMapOf<String, Any>()
 		props[ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG] = bootstrapServers
 		props[ConsumerConfig.CLIENT_ID_CONFIG] = consumerClientId
@@ -53,11 +48,9 @@ class ApplicationConfig(
 
 		props[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
 		props[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = JsonDeserializer::class.java
-//		props[TYPE_MAPPINGS] = "ru.nb.kafka.core.StringValue:ru.nb.kafka.core.StringValue"
+		props[TYPE_MAPPINGS] = "ru.nb.kafka.core.StringValue:ru.nb.kafka.core.StringValue"
 		props[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 3
 		props[ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG] = 3000
-
-		log.info("props: {}", props)
 
 		val kafkaConsumerFactory = DefaultKafkaConsumerFactory<String, StringValue>(props).apply {
 			setValueDeserializer(JsonDeserializer(mapper))
@@ -69,8 +62,8 @@ class ApplicationConfig(
 	@Bean(KAFKA_LISTENER_CONTAINER_FACTORY)
 	fun listenerContainerFactory(
 		consumerFactory: ConsumerFactory<String, StringValue>
-//	): ConcurrentKafkaListenerContainerFactory<String, StringValue> {
-	): KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, StringValue>> {
+	): ConcurrentKafkaListenerContainerFactory<String, StringValue> {
+//	): KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, StringValue>> {
 		val factory = ConcurrentKafkaListenerContainerFactory<String, StringValue>().also {
 			it.consumerFactory = consumerFactory
 			it.isBatchListener = true
@@ -79,7 +72,7 @@ class ApplicationConfig(
 			it.containerProperties.pollTimeout = 1000
 		}
 
-		val executor = SimpleAsyncTaskExecutor("k-consumer-")
+		val executor = SimpleAsyncTaskExecutor("consumer-")
 		executor.concurrencyLimit = 10
 		val listenerTaskExecutor = ConcurrentTaskExecutor(executor)
 		factory.containerProperties.listenerTaskExecutor = listenerTaskExecutor
@@ -117,21 +110,24 @@ class ApplicationConfig(
 }
 
 //@Service
-//class ConsumerKafka {
+//class ConsumerKafka(
+//	private val stringValueConsumer: StringValueConsumer
+//) {
 //
 //	@KafkaListener(
 //		topics = ["\${kafka.topic}"],
 //		containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY,
 //	)
 //	fun listen(@Payload values: List<StringValue>) {
-//		log.info("values, values.size: {}", values.size)
-//		for (stringValue in values) {
-//			log.info("log: {}", stringValue)
-//		}
+//		log.error("values, values.size: {}", values.size)
+//		stringValueConsumer.accept(values)
 //	}
 //
-////	fun listen(value: StringValue) {
-////		log.info("log: {}", value)
+////	fun listen(@Payload values: List<StringValue>) {
+////		log.info("values, values.size: {}", values.size)
+////		for (stringValue in values) {
+////			log.info("log: {}", stringValue)
+////		}
 ////	}
 //
 //	companion object : Log()
