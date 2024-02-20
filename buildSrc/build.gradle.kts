@@ -9,9 +9,6 @@ dependencies {
 
 	// Spring Boot
 	implementation("org.springframework.boot:spring-boot-gradle-plugin:${Spring.BOOT_VERSION}")
-
-	// https://plugins.gradle.org/plugin/org.jetbrains.kotlin.plugin.jpa
-	implementation("org.jetbrains.kotlin:kotlin-noarg:${Kotlin.VERSION}") // kotlin("plugin.jpa")
 }
 
 kotlin {

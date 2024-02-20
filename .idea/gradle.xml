@@ -27,6 +27,7 @@
             <option value="$PROJECT_DIR$/buildSrc" />
             <option value="$PROJECT_DIR$/buildSrc/buildSrc" />
             <option value="$PROJECT_DIR$/consumer" />
+            <option value="$PROJECT_DIR$/core" />
             <option value="$PROJECT_DIR$/producer" />
           </set>
         </option>
