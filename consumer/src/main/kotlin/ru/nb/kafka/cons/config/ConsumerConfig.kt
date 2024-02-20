@@ -24,14 +24,13 @@ import ru.nb.kafka.cons.service.StringValueConsumer
 import ru.nb.kafka.cons.service.StringValueConsumerLogger
 import ru.nb.kafka.core.Log
 import ru.nb.kafka.core.StringValue
-import java.util.*
 
 @Configuration
 class ApplicationConfig(
 	@Value("\${kafka.topic}") val topicName: String,
 	@Value("\${kafka.bootstrap-servers}") val bootstrapServers: String,
 	@Value("\${kafka.consumer.client-id}") val consumerClientId: String,
-	@Value("\${kafka.consumer.group-id}") val consumerGroupId: String,
+	@Value("\${spring.kafka.consumer.group-id}") val consumerGroupId: String,
 ) {
 
 	@Bean
@@ -54,20 +53,23 @@ class ApplicationConfig(
 
 		props[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
 		props[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = JsonDeserializer::class.java
-		props[TYPE_MAPPINGS] = "ru.nb.kafka.core.StringValue:ru.nb.kafka.core.StringValue"
+//		props[TYPE_MAPPINGS] = "ru.nb.kafka.core.StringValue:ru.nb.kafka.core.StringValue"
 		props[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 3
 		props[ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG] = 3000
 
 		log.info("props: {}", props)
 
-		val kafkaConsumerFactory = DefaultKafkaConsumerFactory<String, StringValue>(props)
-		kafkaConsumerFactory.setValueDeserializer(JsonDeserializer(mapper))
+		val kafkaConsumerFactory = DefaultKafkaConsumerFactory<String, StringValue>(props).apply {
+			setValueDeserializer(JsonDeserializer(mapper))
+		}
 		return kafkaConsumerFactory
+//		return DefaultKafkaConsumerFactory(props)
 	}
 
 	@Bean(KAFKA_LISTENER_CONTAINER_FACTORY)
 	fun listenerContainerFactory(
 		consumerFactory: ConsumerFactory<String, StringValue>
+//	): ConcurrentKafkaListenerContainerFactory<String, StringValue> {
 	): KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, StringValue>> {
 		val factory = ConcurrentKafkaListenerContainerFactory<String, StringValue>().also {
 			it.consumerFactory = consumerFactory
@@ -103,8 +105,6 @@ class ApplicationConfig(
 
 		@KafkaListener(
 			topics = ["\${kafka.topic}"],
-//			groupId = "\${kafka.consumer.group-id}",
-			groupId = "test-group",
 			containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY,
 		)
 		fun listen(@Payload values: List<StringValue>) {
@@ -115,5 +115,26 @@ class ApplicationConfig(
 
 	companion object : Log()
 }
+
+//@Service
+//class ConsumerKafka {
+//
+//	@KafkaListener(
+//		topics = ["\${kafka.topic}"],
+//		containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY,
+//	)
+//	fun listen(@Payload values: List<StringValue>) {
+//		log.info("values, values.size: {}", values.size)
+//		for (stringValue in values) {
+//			log.info("log: {}", stringValue)
+//		}
+//	}
+//
+////	fun listen(value: StringValue) {
+////		log.info("log: {}", value)
+////	}
+//
+//	companion object : Log()
+//}
 
 private const val KAFKA_LISTENER_CONTAINER_FACTORY = "listenerContainerFactory"
