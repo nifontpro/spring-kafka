@@ -41,7 +41,12 @@ class ConsumerConfig(
 		props[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
 		props[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = JsonDeserializer::class.java
 		props[TYPE_MAPPINGS] = "ru.nb.kafka.core.StringValue:ru.nb.kafka.core.StringValue"
-		props[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 10
+
+		// Размер пакета сообщений, прочитанного за раз
+		props[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 3
+
+		// Максимальный интервал между двумя операциями чтения,
+		// Если проходит больше этого времени, то считается, что consumer мертв
 		props[ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG] = 3000
 
 		return DefaultKafkaConsumerFactory(props)
@@ -51,18 +56,19 @@ class ConsumerConfig(
 	fun listenerContainerFactory(
 		consumerFactory: ConsumerFactory<String, StringValue>
 	): ConcurrentKafkaListenerContainerFactory<String, StringValue> {
+		val executor = SimpleAsyncTaskExecutor("consumer-")
+		executor.concurrencyLimit = 10
+		val listenerTaskExecutor = ConcurrentTaskExecutor(executor)
 		val factory = ConcurrentKafkaListenerContainerFactory<String, StringValue>().also {
 			it.consumerFactory = consumerFactory
 			it.isBatchListener = true
 			it.setConcurrency(1)
 			it.containerProperties.idleBetweenPolls = 1000
-			it.containerProperties.pollTimeout = 1000
-		}
 
-		val executor = SimpleAsyncTaskExecutor("consumer-")
-		executor.concurrencyLimit = 10
-		val listenerTaskExecutor = ConcurrentTaskExecutor(executor)
-		factory.containerProperties.listenerTaskExecutor = listenerTaskExecutor
+			// Подождать в магазине, пока хлеб привезут
+			it.containerProperties.pollTimeout = 1000
+			it.containerProperties.listenerTaskExecutor = listenerTaskExecutor
+		}
 		return factory
 	}
 
