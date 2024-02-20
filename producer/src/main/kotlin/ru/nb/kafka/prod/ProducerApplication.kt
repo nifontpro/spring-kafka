@@ -1,11 +1,11 @@
-package ru.nb.sprkafka
+package ru.nb.kafka.prod
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 
 @SpringBootApplication
-class SprKafkaApplication
+class ProducerApplication
 
 fun main(args: Array<String>) {
-	runApplication<SprKafkaApplication>(*args)
+	runApplication<ProducerApplication>(*args)
 }

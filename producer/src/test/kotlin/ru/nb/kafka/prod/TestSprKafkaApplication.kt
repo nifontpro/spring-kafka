@@ -1,4 +1,4 @@
-package ru.nb.sprkafka
+package ru.nb.kafka.prod
 
 import org.springframework.boot.fromApplication
 import org.springframework.boot.test.context.TestConfiguration
@@ -20,5 +20,5 @@ class TestSprKafkaApplication {
 }
 
 fun main(args: Array<String>) {
-	fromApplication<SprKafkaApplication>().with(TestSprKafkaApplication::class).run(*args)
+	fromApplication<ProducerApplication>().with(TestSprKafkaApplication::class).run(*args)
 }

@@ -1,10 +1,10 @@
-package ru.nb.sprkafka
+package ru.nb.kafka.prod
 
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
 
 @SpringBootTest
-class SprKafkaApplicationTests {
+class ProducerApplicationTests {
 
 	@Test
 	fun contextLoads() {
